@@ -153,6 +153,17 @@ public final class ReferenceCountedOpenSslServerContext extends ReferenceCounted
                 } else {
                     SSLContext.setCertVerifyCallback(ctx, new TrustManagerVerifyCallback(engineMap, manager));
                 }
+
+                X509Certificate[] issuers = manager.getAcceptedIssuers();
+                if (issuers != null && issuers.length > 0) {
+                    long bio = 0;
+                    try {
+                        bio = toBIO(issuers);
+                        SSLContext.setCACertificateBio(ctx, bio);
+                    } finally {
+                        freeBio(bio);
+                    }
+                }
             } catch (Exception e) {
                 throw new SSLException("unable to setup trustmanager", e);
             }
