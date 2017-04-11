@@ -282,7 +282,7 @@ public abstract class SslContext {
      * @param keyFile a PKCS#8 private key file in PEM format
      * @param keyPassword the password of the {@code keyFile}.
      *                    {@code null} if it's not password-protected.
-     * @param trustManagerFactory the {@link TrustManagerFactory} that provides the {@link javax.net.ssl.TrustManager}s
+     * @param trustManagerFactory the {@link TrustManagerFactory} that provides the {@link TrustManager}s
      *                            that verifies the certificates sent from servers.
      *                            {@code null} to use the default.
      * @param ciphers the cipher suites to enable, in the order of preference.
@@ -777,7 +777,7 @@ public abstract class SslContext {
     }
 
     /**
-     * Creates a new instance (startTls set to <code>false</code>).
+     * Creates a new instance (startTls set to {@code false}).
      */
     protected SslContext() {
         this(false);
@@ -859,7 +859,21 @@ public abstract class SslContext {
      * Creates a new {@link SslHandler}.
      * <p>If {@link SslProvider#OPENSSL_REFCNT} is used then the returned {@link SslHandler} will release the engine
      * that is wrapped. If the returned {@link SslHandler} is not inserted into a pipeline then you may leak native
-     * memory!
+     * memory!</p>
+     * <p><b>Beware</b>: the underlying generated {@link SSLEngine} won't have
+     * <a href="https://wiki.openssl.org/index.php/Hostname_validation">hostname verification</a> enabled by default.
+     * If you create {@link SslHandler} for the client side and want proper security, we advice that you configure
+     * the {@link SSLEngine} (see {@link javax.net.ssl.SSLParameters#setEndpointIdentificationAlgorithm(String)}):</p>
+     * <pre>
+     * SSLEngine sslEngine = sslHandler.engine();
+     * SSLParameters sslParameters = sslEngine.getSSLParameters();
+     * // only available since Java 7
+     * sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+     * sslEngine.setSSLParameters(sslParameters);
+     * </pre>
+     *
+     * @param alloc If supported by the SSLEngine then the SSLEngine will use this to allocate ByteBuf objects.
+     *
      * @return a new {@link SslHandler}
      */
     public final SslHandler newHandler(ByteBufAllocator alloc) {
@@ -870,7 +884,20 @@ public abstract class SslContext {
      * Creates a new {@link SslHandler} with advisory peer information.
      * <p>If {@link SslProvider#OPENSSL_REFCNT} is used then the returned {@link SslHandler} will release the engine
      * that is wrapped. If the returned {@link SslHandler} is not inserted into a pipeline then you may leak native
-     * memory!
+     * memory!</p>
+     * <p><b>Beware</b>: the underlying generated {@link SSLEngine} won't have
+     * <a href="https://wiki.openssl.org/index.php/Hostname_validation">hostname verification</a> enabled by default.
+     * If you create {@link SslHandler} for the client side and want proper security, we advice that you configure
+     * the {@link SSLEngine} (see {@link javax.net.ssl.SSLParameters#setEndpointIdentificationAlgorithm(String)}):</p>
+     * <pre>
+     * SSLEngine sslEngine = sslHandler.engine();
+     * SSLParameters sslParameters = sslEngine.getSSLParameters();
+     * // only available since Java 7
+     * sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
+     * sslEngine.setSSLParameters(sslParameters);
+     * </pre>
+     *
+     * @param alloc If supported by the SSLEngine then the SSLEngine will use this to allocate ByteBuf objects.
      * @param peerHost the non-authoritative name of the host
      * @param peerPort the non-authoritative port
      *
@@ -1096,12 +1123,5 @@ public abstract class SslContext {
         kmf.init(ks, keyPasswordChars);
 
         return kmf;
-    }
-
-    static KeyManagerFactory buildDefaultKeyManagerFactory()
-            throws NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException {
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(null, null);
-        return keyManagerFactory;
     }
 }

@@ -91,7 +91,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     }
 
     /**
-     * @see {@link #remoteAddress(SocketAddress)}
+     * @see #remoteAddress(SocketAddress)
      */
     public Bootstrap remoteAddress(String inetHost, int inetPort) {
         remoteAddress = InetSocketAddress.createUnresolved(inetHost, inetPort);
@@ -99,7 +99,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     }
 
     /**
-     * @see {@link #remoteAddress(SocketAddress)}
+     * @see #remoteAddress(SocketAddress)
      */
     public Bootstrap remoteAddress(InetAddress inetHost, int inetPort) {
         remoteAddress = new InetSocketAddress(inetHost, inetPort);
@@ -157,7 +157,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     }
 
     /**
-     * @see {@link #connect()}
+     * @see #connect()
      */
     private ChannelFuture doResolveAndConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) {
         final ChannelFuture regFuture = initAndRegister();
@@ -266,15 +266,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
         final Map<ChannelOption<?>, Object> options = options0();
         synchronized (options) {
-            for (Entry<ChannelOption<?>, Object> e: options.entrySet()) {
-                try {
-                    if (!channel.config().setOption((ChannelOption<Object>) e.getKey(), e.getValue())) {
-                        logger.warn("Unknown channel option: " + e);
-                    }
-                } catch (Throwable t) {
-                    logger.warn("Failed to set a channel option: " + channel, t);
-                }
-            }
+            setChannelOptions(channel, options, logger);
         }
 
         final Map<AttributeKey<?>, Object> attrs = attrs0();

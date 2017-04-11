@@ -16,10 +16,20 @@
 package io.netty.handler.ssl;
 
 import org.junit.BeforeClass;
+import org.junit.Test;
 
+import javax.net.ssl.SSLException;
+
+import static io.netty.handler.ssl.OpenSslTestUtils.checkShouldUseKeyManagerFactory;
+import static io.netty.internal.tcnative.SSL.SSL_CVERIFY_IGNORED;
 import static org.junit.Assume.assumeTrue;
 
 public class JdkOpenSslEngineInteroptTest extends SSLEngineTest {
+
+    public JdkOpenSslEngineInteroptTest(BufferType type) {
+        super(type);
+    }
+
     @BeforeClass
     public static void checkOpenSsl() {
         assumeTrue(OpenSsl.isAvailable());
@@ -33,5 +43,52 @@ public class JdkOpenSslEngineInteroptTest extends SSLEngineTest {
     @Override
     protected SslProvider sslServerProvider() {
         return SslProvider.OPENSSL;
+    }
+
+    @Override
+    @Test
+    public void testMutualAuthInvalidIntermediateCASucceedWithOptionalClientAuth() throws Exception {
+        checkShouldUseKeyManagerFactory();
+        super.testMutualAuthInvalidIntermediateCASucceedWithOptionalClientAuth();
+    }
+
+    @Override
+    @Test
+    public void testMutualAuthInvalidIntermediateCAFailWithOptionalClientAuth() throws Exception {
+        checkShouldUseKeyManagerFactory();
+        super.testMutualAuthInvalidIntermediateCAFailWithOptionalClientAuth();
+    }
+
+    @Override
+    @Test
+    public void testMutualAuthInvalidIntermediateCAFailWithRequiredClientAuth() throws Exception {
+        checkShouldUseKeyManagerFactory();
+        super.testMutualAuthInvalidIntermediateCAFailWithRequiredClientAuth();
+    }
+
+    @Override
+    @Test
+    public void testMutualAuthValidClientCertChainTooLongFailOptionalClientAuth() throws Exception {
+        checkShouldUseKeyManagerFactory();
+        super.testMutualAuthValidClientCertChainTooLongFailOptionalClientAuth();
+    }
+
+    @Override
+    @Test
+    public void testMutualAuthValidClientCertChainTooLongFailRequireClientAuth() throws Exception {
+        checkShouldUseKeyManagerFactory();
+        super.testMutualAuthValidClientCertChainTooLongFailRequireClientAuth();
+    }
+
+    @Override
+    protected void mySetupMutualAuthServerInitSslHandler(SslHandler handler) {
+        ReferenceCountedOpenSslEngine engine = (ReferenceCountedOpenSslEngine) handler.engine();
+        engine.setVerify(SSL_CVERIFY_IGNORED, 1);
+    }
+
+    @Override
+    protected boolean mySetupMutualAuthServerIsValidClientException(Throwable cause) {
+        // TODO(scott): work around for a JDK issue. The exception should be SSLHandshakeException.
+        return super.mySetupMutualAuthServerIsValidClientException(cause) || causedBySSLException(cause);
     }
 }
